@@ -1,0 +1,189 @@
+#include <ESP8266WiFi.h>
+
+const char* ssid = "Your-SSID-Here";
+const char* password = "Your-SSID-Password-Here";
+ 
+int ledPin1 = 16;
+int ledPin2 = 5;
+int ledPin3 = 4;
+int ledPin4 = 0;
+int ledPin5 = 2;
+int ledPin6 = 14;
+
+WiFiServer server(80);
+ 
+void setup() {
+  Serial.begin(115200);
+  delay(10);
+ 
+  pinMode(ledPin1, OUTPUT);
+  pinMode(ledPin2, OUTPUT);
+  pinMode(ledPin3, OUTPUT);
+  pinMode(ledPin4, OUTPUT);
+  pinMode(ledPin5, OUTPUT);
+  pinMode(ledPin6, OUTPUT);
+  
+  digitalWrite(ledPin1,LOW);
+  digitalWrite(ledPin2,LOW);
+  digitalWrite(ledPin3,LOW);
+  digitalWrite(ledPin4,LOW);  
+  digitalWrite(ledPin5,LOW);
+  digitalWrite(ledPin6,LOW);  
+  
+  // Connect to WiFi network
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+ 
+  WiFi.begin(ssid, password);
+ 
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  
+  Serial.println("");
+  Serial.println("WiFi connected");
+ 
+  // Start Server
+  server.begin();
+  Serial.println("Server started");
+ 
+  // IP address
+  Serial.print("URL: ");
+  Serial.print("http://");
+  Serial.print(WiFi.localIP());
+  Serial.println("");
+}
+ 
+void loop() {
+  WiFiClient client = server.available();
+  if (!client) {
+    return;
+  }
+  while(!client.available()){
+    delay(1);
+  }
+ 
+  String request = client.readStringUntil('\r');
+  Serial.println("Request Type: ");
+  Serial.print(request);
+  Serial.println("");
+  client.flush();
+
+  if (request.indexOf("/cmd=front") != -1){
+     front();
+  }
+  if (request.indexOf("/cmd=back") != -1)  {
+     back();
+  }
+  if (request.indexOf("/cmd=stop") != -1)  {
+     stop1();
+  }
+  if (request.indexOf("/cmd=right") != -1){
+     right();
+  }
+  if (request.indexOf("/cmd=left") != -1){
+     left();
+  }
+  if (request.indexOf("/cmd=lift") != -1){
+     lift();
+  }
+  if (request.indexOf("/cmd=unlift") != -1){
+     unlift();
+  }
+
+  // For the Web Page - with buttons
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-Type: text/html");
+  client.println(""); //  do not forget this one
+  client.println("<!DOCTYPE HTML>");
+  client.println("<html>");
+  client.println("<head>");
+  client.println("</head>");
+  client.println("<body>");
+  client.println("<div class='container'>");
+  client.println("<div class='row'>");
+  client.println("<div class='md-col-2'></div>");
+  client.println("<div class='md-col-8'>");
+  client.println("<center><h3>RAAM - WiFi controlled Rc Car</h3></center>");
+  client.println("<br><br><center>");
+  // for movement  
+  client.println("<a href=\"/cmd=left\"\">   <button class='btn btn-primary'><font size=250> Left   </font></button></a>");
+  client.println("<br>");      client.println("<br>");
+  client.println("<a href=\"/cmd=right\"\">    <button class='btn btn-primary'><font size=250> Right  </font></button></a><br />");
+  client.println("<br>");      client.println("<br>");
+  client.println("<a href=\"/cmd=front\"\">    <button class='btn btn-primary'><font size=250> Front  </font></button></a>");
+  client.println("<br>");      client.println("<br>");
+  client.println("<a href=\"/cmd=back\"\">   <button class='btn btn-primary'><font size=250> Back   </font></button></a>");
+  client.println("<br>");      client.println("<br>");
+  // for lifting
+  client.println("<a href=\"/cmd=lift\"\">    <button class='btn btn-primary'><font size=250> Lift   </font></button></a><br />");    
+  client.println("<br>");      client.println("<br>");
+  client.println("<a href=\"/cmd=unlift\"\">  <button class='btn btn-primary'><font size=250> UnLift </font></button></a><br />");
+  client.println("<br>");      client.println("<br>");
+
+  client.println("</center></div>");
+  client.println("<div class='md-col-2'></div>");
+  client.println("</div>");
+  client.println("</div>");
+  client.println("</body>");  
+  client.println("</html>");
+ }
+
+void unlift(){
+    digitalWrite(ledPin5,LOW);
+    digitalWrite(ledPin6,HIGH);    
+    delay(250);
+    digitalWrite(ledPin5,LOW);    
+    digitalWrite(ledPin6,LOW);
+}
+
+void lift(){
+    digitalWrite(ledPin5,HIGH);
+    digitalWrite(ledPin6,LOW);    
+    delay(750);
+    digitalWrite(ledPin5,LOW);    
+    digitalWrite(ledPin6,LOW);
+}
+
+void front(){
+    digitalWrite(ledPin1,LOW);
+    digitalWrite(ledPin2,HIGH);
+    digitalWrite(ledPin3,LOW);
+    digitalWrite(ledPin4,HIGH);
+    delay(4000);
+    stop1();        
+}
+void back(){
+    digitalWrite(ledPin1,HIGH);
+    digitalWrite(ledPin2,LOW);
+    digitalWrite(ledPin3,HIGH);
+    digitalWrite(ledPin4,LOW);
+    delay(4000);
+    stop1();        
+}
+
+void right(){
+    digitalWrite(ledPin1,HIGH);
+    digitalWrite(ledPin2,LOW);
+    digitalWrite(ledPin3,LOW);
+    digitalWrite(ledPin4,HIGH);
+    delay(1000);
+    stop1();
+}
+
+void left(){
+    digitalWrite(ledPin1,LOW);
+    digitalWrite(ledPin2,HIGH);
+    digitalWrite(ledPin3,HIGH);
+    digitalWrite(ledPin4,LOW);
+    delay(1000);
+    stop1();    
+}
+
+void stop1(){
+    digitalWrite(ledPin1,LOW);
+    digitalWrite(ledPin2,LOW);
+    digitalWrite(ledPin3,LOW);    
+    digitalWrite(ledPin4,LOW);
+}
